@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:11
+    container_name: leadai_db_local
+    environment:
+      POSTGRES_DB: ${LEADAI_DB_NAME:-leadai-db-local}
+      POSTGRES_USER: ${LEADAI_DB_USER:?LEADAI_DB_USER is required}
+      POSTGRES_PASSWORD: ${LEADAI_DB_PASSWORD:?LEADAI_DB_PASSWORD is required}
+    ports:
+      - "${LEADAI_DB_PORT:-5050}:5050"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - leadai_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+
+  adminer:
+    container_name: leadai_adminer_local
+    image: adminer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - leadai_network
+
+volumes:
+  postgres_data:
+
+networks:
+  leadai_network:
+    name: leadai_network
+    driver: bridge
